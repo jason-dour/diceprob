@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	dice_probability "github.com/jason-dour/go-dice-probability"
+	"github.com/jason-dour/diceprob"
 )
 
 func main() {
-	dize, err := dice_probability.New("2d6")
+	dize, err := diceprob.New("2d6")
 	if err != nil {
 		os.Exit(1)
 	}

@@ -1,4 +1,4 @@
-package dice_probability
+package diceprob
 
 import "testing"
 
