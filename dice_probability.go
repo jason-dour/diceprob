@@ -12,8 +12,8 @@ func New(s string) (*DiceProbability, error) {
 	return retval, nil
 }
 
-func (d *DiceProbability) Expression() (string, error) {
+func (d *DiceProbability) Expression() string {
 	retval := d.expression
 
-	return retval, nil
+	return retval
 }
