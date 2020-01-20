@@ -1,3 +1,3 @@
-module github.com/jason-dour/go-dice-probability
+module github.com/jason-dour/diceprob
 
 go 1.13
