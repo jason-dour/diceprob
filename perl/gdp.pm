@@ -1,16 +1,3 @@
-# sub binomial_coeff {
-#     my ( $n,   $k ) = @_;
-#     my ( $res, $j ) = ( 1, 1 );
- 
-#     return 0 if $k > $n || $k < 0;
-#     $k = ( $n - $k ) if ( $n - $k ) < $k;
- 
-#     while ( $j <= $k ) {
-#         $res *= $n--;
-#         $res /= $j++;
-#     }
-#     return $res;
-# }
 package Games::Dice::Probability;
 
 use 5.006;

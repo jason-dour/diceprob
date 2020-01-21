@@ -12,5 +12,5 @@ func main() {
 	if err != nil {
 		os.Exit(1)
 	}
-	fmt.Println("Expression = %s", dize.Expression())
+	fmt.Printf("Expression = %s\n", dize.Expression())
 }

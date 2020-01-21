@@ -1,21 +1,20 @@
 package diceprob
 
-// DiceProbability - Structure of our entire module.
-type DiceProbability struct {
+// DiceProb - Structure of our entire module.
+type DiceProb struct {
 	expression string
 }
 
+type DiceExpr struct {
+	Nodes []*Nodes
+}
+
 // New - Create a new instance.
-func New(s string) (*DiceProbability, error) {
-	retval := &DiceProbability{
-		expression: s,
-	}
-	return retval, nil
+func New(s string) (*DiceProb, error) {
+	return &DiceProb{expression: s}, nil
 }
 
 // Expression - Return the original expression for the instance.
-func (d *DiceProbability) Expression() string {
-	retval := d.expression
-
-	return retval
+func (d *DiceProb) Expression() string {
+	return d.expression
 }

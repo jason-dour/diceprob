@@ -1,4 +1,4 @@
-# go-dice-probability
+# diceprob
 
 Go Library for Calculating Dice Probabilities
 
