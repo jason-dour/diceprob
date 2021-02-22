@@ -1,16 +1,16 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
+	"github.com/alecthomas/repr"
 	"github.com/jason-dour/diceprob"
 )
 
 func main() {
-	dize, err := diceprob.New("2d6")
+	dize, err := diceprob.New(os.Args[1])
 	if err != nil {
 		os.Exit(1)
 	}
-	fmt.Printf("Expression = %s\n", dize.Expression())
+	repr.Println(dize.ParsedExpression())
 }
