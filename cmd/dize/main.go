@@ -10,7 +10,8 @@ import (
 func main() {
 	dize, err := diceprob.New(os.Args[1])
 	if err != nil {
-		os.Exit(1)
+		panic(err)
 	}
-	repr.Println(dize.ParsedExpression())
+	// repr.Println(dize.ParsedExpression())
+	repr.Println(dize.ParsedExpression().String())
 }

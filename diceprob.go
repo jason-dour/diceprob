@@ -12,10 +12,10 @@ var (
 	diceLexer = stateful.MustSimple([]stateful.Rule{
 		{Name: "DiceRoll", Pattern: `(\d+|[mM][iI])[dD](\d+|[fF])`, Action: nil},
 		{Name: "Modifier", Pattern: `\d+`, Action: nil},
-		{Name: "+", Pattern: "\\+", Action: nil},
-		{Name: "-", Pattern: "\\-", Action: nil},
-		{Name: "*", Pattern: "\\*", Action: nil},
-		{Name: "/", Pattern: "\\/", Action: nil},
+		{Name: "+", Pattern: `\+`, Action: nil},
+		{Name: "-", Pattern: `-`, Action: nil},
+		{Name: "*", Pattern: `\*`, Action: nil},
+		{Name: "/", Pattern: `/`, Action: nil},
 		{Name: "(", Pattern: "\\(", Action: nil},
 		{Name: ")", Pattern: "\\)", Action: nil},
 	})
@@ -26,22 +26,8 @@ var (
 type DiceProb struct {
 	expression string
 	parser     *participle.Parser
+	parsed     *Expression
 }
-
-// Let's model the following syntax:
-//
-// expression:	add_sub end  { $item[1] }
-// add_sub:	mult_div '+' add_sub { { left => $item[1], op => '+', right => $item[3] } }
-// add_sub:	mult_div '-' add_sub { { left => $item[1], op => '-', right => $item[3] } }
-// add_sub:	mult_div
-// mult_div:	bracket '/' mult_div { { left => $item[1], op => '/', right => $item[3] } }
-// mult_div:	bracket '*' mult_div { { left => $item[1], op => '*', right => $item[3] } }
-// mult_div:	bracket
-// bracket:	'(' add_sub ')' { $item[2] }
-// bracket:	dicenode
-// dicenode:	/(\d+|mi)d(\d+|f)/i
-// dicenode:	/\d+/
-// end:		/\s*$/
 
 // Operator - TODO
 type Operator int
@@ -83,7 +69,7 @@ type Term struct {
 // OpAtom - TODO
 type OpAtom struct {
 	Operator Operator `parser:"@('*' | '/')"`
-	Atom     *Atom    `parser:"@@*"`
+	Atom     *Atom    `parser:"@@"`
 }
 
 // Atom - Smallest unit of an expression.
@@ -94,6 +80,8 @@ type Atom struct {
 }
 
 // TODO
+
+// String functions.
 
 func (o Operator) String() string {
 	switch o {
@@ -194,7 +182,14 @@ func (e *Expression) String() string {
 
 // New - Create a new instance.
 func New(s string) (*DiceProb, error) {
-	return &DiceProb{expression: s, parser: diceParser}, nil
+	obj := &DiceProb{expression: s, parser: diceParser, parsed: &Expression{}}
+
+	err := obj.parser.ParseString("", obj.expression, obj.parsed)
+	if err != nil {
+		return nil, err
+	}
+
+	return obj, nil
 }
 
 // InputExpression - Return the original expression for the instance.
@@ -204,11 +199,5 @@ func (d *DiceProb) InputExpression() string {
 
 // ParsedExpression - Return the parsed expression
 func (d *DiceProb) ParsedExpression() *Expression {
-	expr := &Expression{}
-	err := d.parser.ParseString("", d.expression, expr)
-	if err != nil {
-		panic(err)
-	}
-
-	return expr
+	return d.parsed
 }
