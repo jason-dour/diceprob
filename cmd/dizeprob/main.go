@@ -1,3 +1,4 @@
+// dizeprob - Calculate and display probabilities for a given dice expression.
 package main
 
 import (

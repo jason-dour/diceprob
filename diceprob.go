@@ -1,3 +1,4 @@
+// Package diceprob - Calculating probabilities and outcomes for complicated dice expressions.
 package diceprob
 
 import (
@@ -9,6 +10,7 @@ import (
 )
 
 var (
+	// Our dice expression lexer.
 	diceLexer = stateful.MustSimple([]stateful.Rule{
 		{Name: "DiceRoll", Pattern: `(\d+|[mM][iI])[dD](\d+|[fF])`, Action: nil},
 		{Name: "Modifier", Pattern: `\d+`, Action: nil},
@@ -16,23 +18,28 @@ var (
 		{Name: "-", Pattern: `-`, Action: nil},
 		{Name: "*", Pattern: `\*`, Action: nil},
 		{Name: "/", Pattern: `/`, Action: nil},
-		{Name: "(", Pattern: "\\(", Action: nil},
-		{Name: ")", Pattern: "\\)", Action: nil},
+		{Name: "(", Pattern: `\(`, Action: nil},
+		{Name: ")", Pattern: `\)`, Action: nil},
 	})
+
+	// Parser for our dice expressions.
 	diceParser = participle.MustBuild(&Expression{}, participle.Lexer(diceLexer), participle.UseLookahead(2))
 )
 
-// DiceProb - Structure of our entire module.
+// DiceProb - Base data structure.
 type DiceProb struct {
 	expression string
 	parser     *participle.Parser
 	parsed     *Expression
 }
 
-// Operator - TODO
+//
+// Operators - Capture and parse operators properly.
+
+// Operator type
 type Operator int
 
-// Operators
+// Operator constants
 const (
 	OpMul Operator = iota
 	OpDiv
@@ -40,13 +47,17 @@ const (
 	OpSub
 )
 
+// operartorMap - Map parsed operators to constants.
 var operatorMap = map[string]Operator{"+": OpAdd, "-": OpSub, "*": OpMul, "/": OpDiv}
 
-// Capture - TODO
+// Capture - Capture the costants while parsing.
 func (o *Operator) Capture(s []string) error {
 	*o = operatorMap[s[0]]
 	return nil
 }
+
+//
+// Parser structures.
 
 // Expression - Top level parsing unit.
 type Expression struct {
@@ -54,19 +65,19 @@ type Expression struct {
 	Right []*OpTerm `parser:"@@*"`
 }
 
-// OpTerm - TODO
+// OpTerm - Expression Operator and Term.
 type OpTerm struct {
 	Operator Operator `parser:"@('+' | '-')"`
 	Term     *Term    `parser:"@@"`
 }
 
-// Term - TODO
+// Term - Expression Term
 type Term struct {
 	Left  *Atom     `parser:"@@"`
 	Right []*OpAtom `parser:"@@*"`
 }
 
-// OpAtom - TODO
+// OpAtom - Expression Operator and Atom.
 type OpAtom struct {
 	Operator Operator `parser:"@('*' | '/')"`
 	Atom     *Atom    `parser:"@@"`
@@ -79,9 +90,15 @@ type Atom struct {
 	SubExpression *Expression `parser:"| '(' @@ ')'"`
 }
 
-// TODO
-
-// String functions.
+//
+// String functions; print the expression components as normalized text.
+func (e *Expression) String() string {
+	out := []string{e.Left.String()}
+	for _, r := range e.Right {
+		out = append(out, r.String())
+	}
+	return strings.Join(out, " ")
+}
 
 func (o Operator) String() string {
 	switch o {
@@ -94,7 +111,23 @@ func (o Operator) String() string {
 	case OpAdd:
 		return "+"
 	}
-	panic("unsupported operator")
+	panic("unsupported operator") // TODO - We can do better here.
+}
+
+func (o *OpTerm) String() string {
+	return fmt.Sprintf("%s %s", o.Operator, o.Term)
+}
+
+func (t *Term) String() string {
+	out := []string{t.Left.String()}
+	for _, r := range t.Right {
+		out = append(out, r.String())
+	}
+	return strings.Join(out, " ")
+}
+
+func (o *OpAtom) String() string {
+	return fmt.Sprintf("%s %s", o.Operator, o.Atom)
 }
 
 func (v *Atom) String() string {
@@ -107,78 +140,54 @@ func (v *Atom) String() string {
 	return "(" + v.SubExpression.String() + ")"
 }
 
-func (o *OpAtom) String() string {
-	return fmt.Sprintf("%s %s", o.Operator, o.Atom)
-}
-
-func (t *Term) String() string {
-	out := []string{t.Left.String()}
-	for _, r := range t.Right {
-		out = append(out, r.String())
+//
+// Roll functions; calculate a "roll" of the expression.
+func (e *Expression) Roll() float64 {
+	left := e.Left.Roll()
+	for _, right := range e.Right {
+		left = right.Operator.Roll(left, right.Term.Roll())
 	}
-	return strings.Join(out, " ")
+	return left
 }
 
-func (o *OpTerm) String() string {
-	return fmt.Sprintf("%s %s", o.Operator, o.Term)
-}
-
-func (e *Expression) String() string {
-	out := []string{e.Left.String()}
-	for _, r := range e.Right {
-		out = append(out, r.String())
+func (o Operator) Roll(l, r float64) float64 {
+	switch o {
+	case OpMul:
+		return l * r
+	case OpDiv:
+		return l / r
+	case OpAdd:
+		return l + r
+	case OpSub:
+		return l - r
 	}
-	return strings.Join(out, " ")
+	panic("unsupported operator")
 }
 
-// Evaluation
+func (t *Term) Roll() float64 {
+	left := t.Left.Roll()
+	for _, right := range t.Right {
+		left = right.Operator.Roll(left, right.Atom.Roll())
+	}
+	return left
+}
 
-// func (o Operator) Eval(l, r float64) float64 {
-// 	switch o {
-// 	case OpMul:
-// 		return l * r
-// 	case OpDiv:
-// 		return l / r
-// 	case OpAdd:
-// 		return l + r
-// 	case OpSub:
-// 		return l - r
-// 	}
-// 	panic("unsupported operator")
-// }
+func (a *Atom) Roll() float64 {
+	switch {
+	// case a.Number != nil:
+	// 	return *a.Number
+	// case a.Variable != nil:
+	// 	value, ok := ctx[*a.Variable]
+	// 	if !ok {
+	// 		panic("no such variable " + *a.Variable)
+	// 	}
+	// 	return value
+	default:
+		return a.SubExpression.Roll()
+	}
+}
 
-// func (v *Atom) Eval(ctx Context) float64 {
-// 	switch {
-// 	case v.Number != nil:
-// 		return *v.Number
-// 	case v.Variable != nil:
-// 		value, ok := ctx[*v.Variable]
-// 		if !ok {
-// 			panic("no such variable " + *v.Variable)
-// 		}
-// 		return value
-// 	default:
-// 		return v.Subexpression.Eval(ctx)
-// 	}
-// }
-
-// func (t *Term) Eval(ctx Context) float64 {
-// 	n := t.Left.Eval(ctx)
-// 	for _, r := range t.Right {
-// 		n = r.Operator.Eval(n, r.Factor.Eval(ctx))
-// 	}
-// 	return n
-// }
-
-// func (e *Expression) Eval(ctx Context) float64 {
-// 	l := e.Left.Eval(ctx)
-// 	for _, r := range e.Right {
-// 		l = r.Operator.Eval(l, r.Term.Eval(ctx))
-// 	}
-// 	return l
-// }
-
-// TODO
+// Calculate // TODO - Need to write.
 
 // New - Create a new instance.
 func New(s string) (*DiceProb, error) {
@@ -200,4 +209,9 @@ func (d *DiceProb) InputExpression() string {
 // ParsedExpression - Return the parsed expression
 func (d *DiceProb) ParsedExpression() *Expression {
 	return d.parsed
+}
+
+// Roll - Perform a "roll" of the expression and return the outcome
+func (d *DiceProb) Roll() float64 {
+	return d.parsed.Roll()
 }
