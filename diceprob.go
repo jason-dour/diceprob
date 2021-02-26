@@ -57,7 +57,8 @@ func (o *Operator) Capture(s []string) error {
 }
 
 //
-// Parser structures.
+// Parser definitions.
+type DiceRoll string
 
 // Expression - Top level parsing unit.
 type Expression struct {
@@ -86,7 +87,7 @@ type OpAtom struct {
 // Atom - Smallest unit of an expression.
 type Atom struct {
 	Modifier      *float64    `parser:"@Modifier"`
-	DiceRoll      *string     `parser:"| @DiceRoll"`
+	RollExpr      *DiceRoll   `parser:"| @DiceRoll"`
 	SubExpression *Expression `parser:"| '(' @@ ')'"`
 }
 
@@ -134,10 +135,15 @@ func (v *Atom) String() string {
 	if v.Modifier != nil {
 		return fmt.Sprintf("%g", *v.Modifier)
 	}
-	if v.DiceRoll != nil {
-		return *v.DiceRoll
+	if v.RollExpr != nil {
+		return v.RollExpr.String()
 	}
 	return "(" + v.SubExpression.String() + ")"
+}
+
+func (r *DiceRoll) String() string {
+	ret := string(*r)
+	return ret
 }
 
 //
@@ -174,17 +180,18 @@ func (t *Term) Roll() float64 {
 
 func (a *Atom) Roll() float64 {
 	switch {
-	// case a.Number != nil:
-	// 	return *a.Number
-	// case a.Variable != nil:
-	// 	value, ok := ctx[*a.Variable]
-	// 	if !ok {
-	// 		panic("no such variable " + *a.Variable)
-	// 	}
-	// 	return value
+	case a.Modifier != nil:
+		return *a.Modifier
+	case a.RollExpr != nil:
+		return a.RollExpr.Roll()
 	default:
 		return a.SubExpression.Roll()
 	}
+}
+
+func (s *DiceRoll) Roll() float64 {
+	// TODO - Return the real value instead of just a 1.
+	return 1
 }
 
 // Calculate // TODO - Need to write.

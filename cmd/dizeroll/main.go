@@ -14,5 +14,5 @@ func main() {
 		panic(err)
 	}
 	// repr.Println(dize.ParsedExpression())
-	repr.Println(dize.ParsedExpression().String())
+	repr.Println(dize.ParsedExpression().Roll())
 }
