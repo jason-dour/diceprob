@@ -11,7 +11,7 @@ element of those designs.
 
 I spent years researching combinatorics and probabilities of dice as a personal hobby.
 Maybe that's weird.  Regardless, that eventually led to me writing code, and that initially
-took form as a Perl module `Games::Dice::Probability`.
+took form as a [Perl module `Games::Dice::Probability`](https://metacpan.org/pod/Games::Dice::Probability).
 
 The `G::D::P` module was blazing fast, worked well for what I used it for, and seemed
 to have enough users to have made the coding worthwhile.
