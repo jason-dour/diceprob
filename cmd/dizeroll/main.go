@@ -15,5 +15,4 @@ func main() {
 	}
 	// repr.Println(dize.ParsedExpression())
 	repr.Println(dize.ParsedExpression().Roll())
-	repr.Println(dize.ParsedExpression())
 }
