@@ -32,9 +32,9 @@ var (
 
 // DiceProb - Base data structure.
 type DiceProb struct {
-	expression string
-	parser     *participle.Parser
-	parsed     *Expression
+	Expression string             // Expression provided when creating the instance.
+	Parser     *participle.Parser // Participle parser for the expression.
+	Parsed     *Expression        // Parsed expression data structure.
 }
 
 //
@@ -63,7 +63,7 @@ func (o *Operator) Capture(s []string) error {
 //
 // Parser definitions.
 
-// DiceRoll - Type to allow for a function to be attached.
+// DiceRoll - String representing a dice roll atomic expression.
 type DiceRoll string
 
 // Expression - Top level parsing unit.
@@ -99,6 +99,8 @@ type Atom struct {
 
 //
 // String functions; print the expression components as normalized text.
+
+// String - Output the dice Expression as a string; top level of recursive output functions.
 func (e *Expression) String() string {
 	out := []string{e.Left.String()}
 	for _, r := range e.Right {
@@ -107,6 +109,7 @@ func (e *Expression) String() string {
 	return strings.Join(out, " ")
 }
 
+// String - Output the Operator as a string; part of the recursive output functions.
 func (o Operator) String() string {
 	switch o {
 	case OpMul:
@@ -121,10 +124,12 @@ func (o Operator) String() string {
 	panic("unsupported operator") // TODO - We can do better here.
 }
 
+// String - Output the Operator and Term as a string; part of the recursive output functions.
 func (o *OpTerm) String() string {
 	return fmt.Sprintf("%s %s", o.Operator, o.Term)
 }
 
+// String - Output the Term as a string; part of the recursive output functions.
 func (t *Term) String() string {
 	out := []string{t.Left.String()}
 	for _, r := range t.Right {
@@ -133,13 +138,15 @@ func (t *Term) String() string {
 	return strings.Join(out, " ")
 }
 
+// String - Output the Operator and Atom as a string; part of the recursive output functions.
 func (o *OpAtom) String() string {
 	return fmt.Sprintf("%s %s", o.Operator, o.Atom)
 }
 
+// String - Output the Atom as a string; part of the recursive output functions.
 func (v *Atom) String() string {
 	if v.Modifier != nil {
-		return fmt.Sprintf("%g", *v.Modifier)
+		return fmt.Sprintf("%d", *v.Modifier)
 	}
 	if v.RollExpr != nil {
 		return v.RollExpr.String()
@@ -147,6 +154,7 @@ func (v *Atom) String() string {
 	return "(" + v.SubExpression.String() + ")"
 }
 
+// String - Output the DiceRoll as a string; the deepest of the recursive output functions.
 func (r *DiceRoll) String() string {
 	ret := string(*r)
 	return ret
@@ -154,6 +162,8 @@ func (r *DiceRoll) String() string {
 
 //
 // Roll functions; calculate a "roll" of the expression.
+
+// Roll - Roll a random value for the Expression; top-level of the recursive roll functions.
 func (e *Expression) Roll() int64 {
 	left := e.Left.Roll()
 	for _, right := range e.Right {
@@ -162,6 +172,7 @@ func (e *Expression) Roll() int64 {
 	return left
 }
 
+// Roll - Roll a random values around the Operator; part of the recursive roll functions.
 func (o Operator) Roll(l, r int64) int64 {
 	switch o {
 	case OpMul:
@@ -176,6 +187,7 @@ func (o Operator) Roll(l, r int64) int64 {
 	panic("unsupported operator") // TODO - We can do better here.
 }
 
+// Roll - Roll a random value for the Term; part of the recursive roll functions.
 func (t *Term) Roll() int64 {
 	left := t.Left.Roll()
 	for _, right := range t.Right {
@@ -184,6 +196,7 @@ func (t *Term) Roll() int64 {
 	return left
 }
 
+// Roll - Roll a random value for the Atom; part of the recursive roll functions.
 func (a *Atom) Roll() int64 {
 	switch {
 	case a.Modifier != nil:
@@ -195,6 +208,7 @@ func (a *Atom) Roll() int64 {
 	}
 }
 
+// Roll - Roll a random value for the DiceRoll; deepest of the recursive roll functions.
 func (s *DiceRoll) Roll() int64 {
 	sActual := string(*s)
 
@@ -222,6 +236,10 @@ func (s *DiceRoll) Roll() int64 {
 
 	return rollIt("d", left, right)
 }
+
+//
+// Calculate functions; calculate combinations, probabilities, bounds, etc.
+// TODO - Need to write.
 
 // rollIt - Using the selected method, roll n dice of s faces, and return the sum.
 func rollIt(method string, n int64, s int64) int64 {
@@ -260,13 +278,11 @@ func rollIt(method string, n int64, s int64) int64 {
 	}
 }
 
-// Calculate // TODO - Need to write.
-
-// New - Create a new instance.
+// New - Create a new DiceProb instance.
 func New(s string) (*DiceProb, error) {
-	obj := &DiceProb{expression: s, parser: diceParser, parsed: &Expression{}}
+	obj := &DiceProb{Expression: s, Parser: diceParser, Parsed: &Expression{}}
 
-	err := obj.parser.ParseString("", obj.expression, obj.parsed)
+	err := obj.Parser.ParseString("", obj.Expression, obj.Parsed)
 	if err != nil {
 		return nil, err
 	}
@@ -276,15 +292,15 @@ func New(s string) (*DiceProb, error) {
 
 // InputExpression - Return the original expression for the instance.
 func (d *DiceProb) InputExpression() string {
-	return d.expression
+	return d.Expression
 }
 
-// ParsedExpression - Return the parsed expression
+// ParsedExpression - Return the parsed expression for the instance.
 func (d *DiceProb) ParsedExpression() *Expression {
-	return d.parsed
+	return d.Parsed
 }
 
-// Roll - Perform a "roll" of the expression and return the outcome
+// Roll - Perform a "roll" of the expression and return the outcome.
 func (d *DiceProb) Roll() int64 {
-	return d.parsed.Roll()
+	return d.Parsed.Roll()
 }
