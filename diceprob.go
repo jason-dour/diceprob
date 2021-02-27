@@ -259,15 +259,12 @@ func rollIt(method string, n int64, s int64) int64 {
 	case "d":
 		// Initialize the return value.
 		ret := int64(0)
-		fmt.Println(ret)
 		// Loop from 1 to n...
 		for i := int64(1); i <= n; i++ {
 			// Add the value of the roll to the return value.
 			ret = ret + (r.Int63n(s) + 1)
-			fmt.Println(ret)
 		}
 		// Return the summed roll.
-		fmt.Println(ret)
 		return ret
 	// Should not reach.
 	default:
