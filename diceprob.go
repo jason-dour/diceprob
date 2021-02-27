@@ -144,19 +144,19 @@ func (o *OpAtom) String() string {
 }
 
 // String - Output the Atom as a string; part of the recursive output functions.
-func (v *Atom) String() string {
-	if v.Modifier != nil {
-		return fmt.Sprintf("%d", *v.Modifier)
+func (a *Atom) String() string {
+	if a.Modifier != nil {
+		return fmt.Sprintf("%d", *a.Modifier)
 	}
-	if v.RollExpr != nil {
-		return v.RollExpr.String()
+	if a.RollExpr != nil {
+		return a.RollExpr.String()
 	}
-	return "(" + v.SubExpression.String() + ")"
+	return "(" + a.SubExpression.String() + ")"
 }
 
 // String - Output the DiceRoll as a string; the deepest of the recursive output functions.
-func (r *DiceRoll) String() string {
-	ret := string(*r)
+func (s *DiceRoll) String() string {
+	ret := string(*s)
 	return ret
 }
 
@@ -210,8 +210,10 @@ func (a *Atom) Roll() int64 {
 
 // Roll - Roll a random value for the DiceRoll; deepest of the recursive roll functions.
 func (s *DiceRoll) Roll() int64 {
+	// Convert s to a string.
 	sActual := string(*s)
 
+	// Find the D in the roll.
 	dToken := strings.Index(sActual, "d")
 	if dToken == 0 {
 		dToken = strings.Index(sActual, "D")
@@ -220,20 +222,26 @@ func (s *DiceRoll) Roll() int64 {
 		panic("invalid dice roll atomic expression")
 	}
 
+	// Grab the digits to the right of the D.
 	right, err := strconv.ParseInt(sActual[dToken+1:], 10, 64)
 	if err != nil {
 		panic(err)
 	}
 
+	// If the dice roll is a "middle" roll of 3 dice.
 	if sActual[0:3] == "mid" {
+		// Return a middle rolled value.
 		return rollIt("m", 3, right)
 	}
+	// Not a "middle" roll, therefore a standard roll.
 
+	// Grab the number of dice from the left of the D.
 	left, err := strconv.ParseInt(sActual[0:dToken], 10, 64)
 	if err != nil {
 		panic(err)
 	}
 
+	// Return a standard rolled value.
 	return rollIt("d", left, right)
 }
 
