@@ -161,16 +161,16 @@ func (e *Expression) Roll() int64 {
 }
 
 // Roll - Roll a random values around the Operator; part of the recursive roll functions.
-func (o Operator) Roll(l, r int64) int64 {
+func (o Operator) Roll(left, right int64) int64 {
 	switch o {
 	case OpMul:
-		return l * r
+		return left * right
 	case OpDiv:
-		return l / r
+		return left / right
 	case OpAdd:
-		return l + r
+		return left + right
 	case OpSub:
-		return l - r
+		return left - right
 	}
 	panic("unsupported operator") // TODO - We can do better here.
 }
@@ -203,7 +203,7 @@ func (s *DiceRoll) Roll() int64 {
 
 	// Find the D in the roll.
 	dToken := strings.Index(sActual, "d")
-	if dToken == 0 {
+	if dToken == -1 {
 		dToken = strings.Index(sActual, "D")
 	}
 	if dToken == -1 {
@@ -259,12 +259,15 @@ func rollIt(method string, n int64, s int64) int64 {
 	case "d":
 		// Initialize the return value.
 		ret := int64(0)
+		fmt.Println(ret)
 		// Loop from 1 to n...
-		for i := n; i <= n; i++ {
+		for i := int64(1); i <= n; i++ {
 			// Add the value of the roll to the return value.
 			ret = ret + (r.Int63n(s) + 1)
+			fmt.Println(ret)
 		}
 		// Return the summed roll.
+		fmt.Println(ret)
 		return ret
 	// Should not reach.
 	default:
