@@ -3,7 +3,10 @@ package diceprob
 
 import (
 	"fmt"
+	"math"
+	"math/big"
 	"math/rand"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -32,9 +35,14 @@ var (
 
 // DiceProb - Base data structure.
 type DiceProb struct {
-	Expression string             // Expression provided when creating the instance.
-	Parser     *participle.Parser // Participle parser for the expression.
-	Parsed     *Expression        // Parsed expression data structure.
+	Expression    string             // Expression provided when creating the instance.
+	Parser        *participle.Parser // Participle parser for the expression.
+	Parsed        *Expression        // Parsed expression data structure.
+	Outcome       *[]int64           // List of outcome values.
+	Outcomes      int64              // Total number of outcomes.
+	Distribution  *map[int64]int64   // Distribution of summed outcomes and their frequency.
+	Probabilities *map[int64]float64 // Probability of each outcome.
+	Bounds        *[]int64           // Min/Max Bounds of the outcomes.
 }
 
 // Operator type
@@ -199,13 +207,10 @@ func (a *Atom) Roll() int64 {
 // Roll - Roll a random value for the DiceRoll; deepest of the recursive roll functions.
 func (s *DiceRoll) Roll() int64 {
 	// Convert s to a string.
-	sActual := string(*s)
+	sActual := strings.ToLower(string(*s))
 
 	// Find the D in the roll.
 	dToken := strings.Index(sActual, "d")
-	if dToken == -1 {
-		dToken = strings.Index(sActual, "D")
-	}
 	if dToken == -1 {
 		panic("invalid dice roll atomic expression")
 	}
@@ -233,7 +238,163 @@ func (s *DiceRoll) Roll() int64 {
 	return rollIt("d", left, right)
 }
 
-// TODO - Need to write the Calculate functions.
+// Distribution - Determine the outcomes' distribution for the Expression; top-level of the recursive distribution functions.
+func (e *Expression) Distribution() *map[int64]int64 {
+	left := e.Left.Distribution()
+	for _, right := range e.Right {
+		left = right.Operator.Distribution(left, right.Term.Distribution())
+	}
+	return left
+}
+
+// Distribution - Determine the outcomes' distribution around an Operator; part of the recursive distribution functions.
+func (o Operator) Distribution(left, right *map[int64]int64) *map[int64]int64 {
+	combined := map[int64]int64{}
+
+	for outcome1, freq1 := range *left {
+		for outcome2, freq2 := range *right {
+			outcomeNew := int64(0)
+			switch o {
+			case OpMul:
+				outcomeNew = outcome1 * outcome2
+			case OpDiv:
+				outcomeNew = outcome1 / outcome2
+			case OpAdd:
+				outcomeNew = outcome1 + outcome2
+			case OpSub:
+				outcomeNew = outcome1 - outcome2
+			}
+			combined[outcomeNew] = combined[outcomeNew] + (freq1 * freq2)
+		}
+	}
+
+	return &combined
+}
+
+// Distribution - Determine the outcomes' distribution for the Term; part of the recursive distribution functions.
+func (t *Term) Distribution() *map[int64]int64 {
+	left := t.Left.Distribution()
+	for _, right := range t.Right {
+		left = right.Operator.Distribution(left, right.Atom.Distribution())
+	}
+	return left
+}
+
+// Distribution - Determine the outcomes' distribution for the Atom; part of the recursive distribution functions.
+func (a *Atom) Distribution() *map[int64]int64 {
+	switch {
+	case a.Modifier != nil:
+		return &map[int64]int64{*a.Modifier: 1}
+	case a.RollExpr != nil:
+		return a.RollExpr.Distribution()
+	default:
+		return a.SubExpression.Distribution()
+	}
+}
+
+// Distribution - Determine the outcomes' distribution for the DiceRoll; deepest of the recursive distribution functions.
+func (s *DiceRoll) Distribution() *map[int64]int64 {
+	// Convert s to a string.
+	sActual := strings.ToLower(string(*s))
+
+	// Prepare for the distribution.
+	retDist := map[int64]int64{}
+
+	// Prepare a regex to parse the dice roll.
+	re := regexp.MustCompile(`(?P<left>\d+|mi)d(?P<right>\d+|f)`)
+
+	// Parse the roll syntax.
+	m := re.FindStringSubmatch(sActual)
+	left := m[re.SubexpIndex("left")]
+	right := m[re.SubexpIndex("right")]
+
+	switch right {
+	case "f":
+		// TODO - All Fudge/FATE dice code needs an overhaul. Ugh.
+		switch left {
+		case "mi":
+			// If the dice roll is a "middle" roll of 3 dice.
+			// TODO - midF?  Haven't done that before; need to craft that logic.
+			// if sActual[0:3] == "mid" {
+			// 	// For each outcome in 1..s, calculate the number of combinations giving outcome as the middle value.
+			// 	for outcome := int64(1); outcome <= right; outcome++ {
+			// 		retDist[outcome] = 1 + (3 * (right - 1)) + (6 * (outcome - 1) * (right - outcome))
+			// 	}
+			// 	return &retDist
+			// }
+			break
+		default:
+			// Standard Fudge/Fate dice roll.
+			break
+		}
+		break
+	default:
+		rightInt, err := strconv.ParseInt(right, 10, 64)
+		if err != nil {
+			panic(err)
+		}
+		switch left {
+		case "mi":
+			// If the dice roll is a "middle" roll of 3 dice.
+			if sActual[0:3] == "mid" {
+				// For each outcome in 1..s, calculate the number of combinations giving outcome as the middle value.
+				for outcome := int64(1); outcome <= rightInt; outcome++ {
+					retDist[outcome] = 1 + (3 * (rightInt - 1)) + (6 * (outcome - 1) * (rightInt - outcome))
+				}
+			}
+			break
+		default:
+			// Standard dice roll. Convert left to Int64.
+			leftInt, err := strconv.ParseInt(left, 10, 64)
+			if err != nil {
+				panic(err)
+			}
+
+			// Save effort if only one die...
+			if leftInt == 1 {
+				// Each outcome only occurs once.
+				for outcome := int64(1); outcome <= rightInt; outcome++ {
+					retDist[outcome] = 1
+				}
+				break
+			}
+
+			// More than 1 die!
+			// Calculate min, max
+			min := leftInt
+			max := leftInt * rightInt
+			// And peak around which we will mirror the distribution.
+			peak := (min + max) / 2
+
+			// For every outcome from min to peak...
+			for outcome := min; outcome <= peak; outcome++ {
+				// Caculated the mirrored outcome.
+				reflected := min + max - outcome
+				// Determine the ceiling of the sum function.
+				ceiling := (outcome - leftInt) / rightInt
+				// Initialize the frequency.
+				frequency := int64(0)
+				// For 0 to ceiling, sum the frequencies.
+				for i := int64(0); i <= ceiling; i++ {
+					part1 := big.NewInt(0)
+					part2 := big.NewInt(0)
+					frequency = frequency + (int64(math.Pow(-1, float64(i))) *
+						part1.Binomial(leftInt, i).Int64() *
+						part2.Binomial((outcome-(rightInt*i)-1), (leftInt-1)).Int64())
+				}
+				// Assign the outcome...
+				retDist[outcome] = frequency
+				// ...and its mirror.
+				retDist[reflected] = frequency
+			}
+
+			break
+		}
+		break
+	}
+	// Return the distribution.
+	return &retDist
+}
 
 // rollIt - Using the selected method, roll n dice of s faces, and return the sum.
 func rollIt(method string, n int64, s int64) int64 {
@@ -275,7 +436,16 @@ func rollIt(method string, n int64, s int64) int64 {
 // New - Create a new DiceProb instance.
 func New(s string) (*DiceProb, error) {
 	// Create our object.
-	obj := &DiceProb{Expression: s, Parser: diceParser, Parsed: &Expression{}}
+	obj := &DiceProb{
+		Expression:    s,
+		Parser:        diceParser,
+		Parsed:        &Expression{},
+		Distribution:  &map[int64]int64{},
+		Probabilities: &map[int64]float64{},
+		Bounds:        &[]int64{},
+		Outcome:       &[]int64{},
+		Outcomes:      int64(0),
+	}
 
 	// Parse the expression and put it into the object.
 	err := obj.Parser.ParseString("", obj.Expression, obj.Parsed)
@@ -300,4 +470,56 @@ func (d *DiceProb) ParsedExpression() *Expression {
 // Roll - Perform a "roll" of the expression and return the outcome.
 func (d *DiceProb) Roll() int64 {
 	return d.Parsed.Roll()
+}
+
+// Min - Minimum outcome value for the expression's distribution.
+func (d *DiceProb) Min() int64 {
+	return (*d.Bounds)[0]
+}
+
+// Max - Maximum outcome value for the expression's distribution.
+func (d *DiceProb) Max() int64 {
+	return (*d.Bounds)[1]
+}
+
+// OutcomeList - Return list of outcomes for the expression.
+func (d *DiceProb) OutcomeList() *[]int64 {
+	return d.Outcome
+}
+
+// OutcomeListString - Return list of outcomes for the expression as strings.
+func (d *DiceProb) OutcomeListString() *[]string {
+	ret := []string{}
+	for i := 0; i < len(*d.Outcome); i++ {
+		ret = append(ret, strconv.FormatInt((*d.Outcome)[i], 10))
+	}
+	return &ret
+}
+
+// TotalOutcomes - Total outcomes for the expression.
+func (d *DiceProb) TotalOutcomes() int64 {
+	return d.Outcomes
+}
+
+// Calculate - Calculate the Distribution and Probabilities for the ParsedExpression.
+func (d *DiceProb) Calculate() {
+	d.Distribution = d.Parsed.Distribution()
+
+	keys := make([]int64, 0, len(*d.Distribution))
+	for k := range *d.Distribution {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+	d.Outcome = &keys
+	d.Bounds = &[]int64{keys[0], keys[len(keys)-1]}
+
+	for _, frequency := range *d.Distribution {
+		d.Outcomes = d.Outcomes + frequency
+	}
+
+	for outcome, frequency := range *d.Distribution {
+		(*d.Probabilities)[outcome] = float64(frequency) / float64(d.Outcomes)
+	}
+
+	return
 }
