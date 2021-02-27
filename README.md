@@ -60,6 +60,20 @@ From there you can calculate the combinations, probabilities, et al.
 dize.Calculate()
 ```
 
+And call them for display or computation.
+
+``` golang
+fmt.Printf("Expression: %s\n", dize.InputExpression())
+fmt.Printf("Bounds: %v..%v\n", dize.Min(), dize.Max())
+fmt.Printf("Outcomes: %v\n", dize.TotalOutcomes())
+fmt.Printf("Outcome Set: %s\n", strings.Join(*dize.OutcomeListString(), ","))
+fmt.Printf("Distribution:\n  Outcome | Frequency | Probability\n")
+
+for _, i := range *dize.OutcomeList() {
+  fmt.Printf("  %-8d  %-8d    %.6g\n", i, (*dize.Distribution)[i], (*dize.Probabilities)[i])
+}
+```
+
 Or you can just "roll" the dice expression and retrieve a value.
 
 ``` golang
