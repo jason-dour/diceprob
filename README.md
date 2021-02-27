@@ -19,6 +19,53 @@ to have enough users to have made the coding worthwhile.
 Fast forward many many years, and I'm rewriting it as a Golang package to allow me to
 continue with my hobby, and maybe enable others in the process.
 
+## Install
+
+Install with:
+
+``` shell
+$ go get github.com/jason-dour/diceprob
+```
+
+## Usage
+
+Create a new instance:
+
+``` golang
+dize, err := diceprob.New("3d6")
+if err != nil {
+  panic(err)
+}
+```
+
+Creating the instance will automatically parse the expression into an object tree.
+
+``` golang
+repr.Println(dize.ParsedExpression())
+```
+
+``` text
+&diceprob.Expression{
+  Left: &diceprob.Term{
+    Left: &diceprob.Atom{
+      RollExpr: &diceprob.DiceRoll("3d6"),
+    },
+  },
+}
+```
+
+From there you can calculate the combinations, probabilities, and other metrics.
+
+``` golang
+// COMING SOON
+```
+
+Or you can just "roll" the dice expression and retrieve a value.
+
+``` golang
+dize.ParsedExpression().Roll()
+```
+
 ## Notes
 
 * golang memoize

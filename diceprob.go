@@ -3,7 +3,11 @@ package diceprob
 
 import (
 	"fmt"
+	"math/rand"
+	"sort"
+	"strconv"
 	"strings"
+	"time"
 
 	participle "github.com/alecthomas/participle/v2"
 	"github.com/alecthomas/participle/v2/lexer/stateful"
@@ -58,6 +62,8 @@ func (o *Operator) Capture(s []string) error {
 
 //
 // Parser definitions.
+
+// DiceRoll - Type to allow for a function to be attached.
 type DiceRoll string
 
 // Expression - Top level parsing unit.
@@ -86,7 +92,7 @@ type OpAtom struct {
 
 // Atom - Smallest unit of an expression.
 type Atom struct {
-	Modifier      *float64    `parser:"@Modifier"`
+	Modifier      *int64      `parser:"@Modifier"`
 	RollExpr      *DiceRoll   `parser:"| @DiceRoll"`
 	SubExpression *Expression `parser:"| '(' @@ ')'"`
 }
@@ -148,7 +154,7 @@ func (r *DiceRoll) String() string {
 
 //
 // Roll functions; calculate a "roll" of the expression.
-func (e *Expression) Roll() float64 {
+func (e *Expression) Roll() int64 {
 	left := e.Left.Roll()
 	for _, right := range e.Right {
 		left = right.Operator.Roll(left, right.Term.Roll())
@@ -156,7 +162,7 @@ func (e *Expression) Roll() float64 {
 	return left
 }
 
-func (o Operator) Roll(l, r float64) float64 {
+func (o Operator) Roll(l, r int64) int64 {
 	switch o {
 	case OpMul:
 		return l * r
@@ -167,10 +173,10 @@ func (o Operator) Roll(l, r float64) float64 {
 	case OpSub:
 		return l - r
 	}
-	panic("unsupported operator")
+	panic("unsupported operator") // TODO - We can do better here.
 }
 
-func (t *Term) Roll() float64 {
+func (t *Term) Roll() int64 {
 	left := t.Left.Roll()
 	for _, right := range t.Right {
 		left = right.Operator.Roll(left, right.Atom.Roll())
@@ -178,7 +184,7 @@ func (t *Term) Roll() float64 {
 	return left
 }
 
-func (a *Atom) Roll() float64 {
+func (a *Atom) Roll() int64 {
 	switch {
 	case a.Modifier != nil:
 		return *a.Modifier
@@ -189,9 +195,69 @@ func (a *Atom) Roll() float64 {
 	}
 }
 
-func (s *DiceRoll) Roll() float64 {
-	// TODO - Return the real value instead of just a 1.
-	return 1
+func (s *DiceRoll) Roll() int64 {
+	sActual := string(*s)
+
+	dToken := strings.Index(sActual, "d")
+	if dToken == 0 {
+		dToken = strings.Index(sActual, "D")
+	}
+	if dToken == -1 {
+		panic("invalid dice roll atomic expression")
+	}
+
+	right, err := strconv.ParseInt(sActual[dToken+1:], 10, 64)
+	if err != nil {
+		panic(err)
+	}
+
+	if sActual[0:3] == "mid" {
+		return rollIt("m", 3, right)
+	}
+
+	left, err := strconv.ParseInt(sActual[0:dToken], 10, 64)
+	if err != nil {
+		panic(err)
+	}
+
+	return rollIt("d", left, right)
+}
+
+// rollIt - Using the selected method, roll n dice of s faces, and return the sum.
+func rollIt(method string, n int64, s int64) int64 {
+	// Seed the randomizer.
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	// Depending on the method...
+	switch method {
+	// Mid rolling method.
+	case "m":
+		// Initialize the array of rolls.
+		ret := []int64{}
+		// Loop three times...
+		for i := int64(1); i <= 3; i++ {
+			// Appending a roll to the array.
+			ret = append(ret, (r.Int63n(s) + 1))
+		}
+		// Sort the array numerically.
+		sort.Slice(ret, func(i, j int) bool { return ret[i] < ret[j] })
+		// Return the middle value.
+		return ret[1]
+	// "Standard" rolling method.
+	case "d":
+		// Initialize the return value.
+		ret := int64(0)
+		// Loop from 1 to n...
+		for i := n; i <= n; i++ {
+			// Add the value of the roll to the return value.
+			ret = ret + (r.Int63n(s) + 1)
+		}
+		// Return the summed roll.
+		return ret
+	// Should not reach.
+	default:
+		panic("invalid rollIt method")
+	}
 }
 
 // Calculate // TODO - Need to write.
@@ -219,6 +285,6 @@ func (d *DiceProb) ParsedExpression() *Expression {
 }
 
 // Roll - Perform a "roll" of the expression and return the outcome
-func (d *DiceProb) Roll() float64 {
+func (d *DiceProb) Roll() int64 {
 	return d.parsed.Roll()
 }
