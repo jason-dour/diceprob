@@ -54,10 +54,10 @@ repr.Println(dize.ParsedExpression())
 }
 ```
 
-From there you can calculate the combinations, probabilities, and other metrics.
+From there you can calculate the combinations, probabilities, et al.
 
 ``` golang
-// COMING SOON
+dize.Calculate()
 ```
 
 Or you can just "roll" the dice expression and retrieve a value.
