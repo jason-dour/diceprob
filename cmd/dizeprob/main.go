@@ -24,6 +24,6 @@ func main() {
 	fmt.Printf("Distribution:\n  Outcome | Frequency | Probability\n")
 
 	for _, i := range *dize.OutcomeList() {
-		fmt.Printf("  %-8d  %-8d    %-g\n", i, (*dize.Distribution)[i], (*dize.Probabilities)[i])
+		fmt.Printf("  %-8d  %-8d    %-1.6g\n", i, (*dize.Distribution)[i], (*dize.Probabilities)[i])
 	}
 }
