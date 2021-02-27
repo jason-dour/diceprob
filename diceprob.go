@@ -37,9 +37,6 @@ type DiceProb struct {
 	Parsed     *Expression        // Parsed expression data structure.
 }
 
-//
-// Operators - Capture and parse operators properly.
-
 // Operator type
 type Operator int
 
@@ -59,9 +56,6 @@ func (o *Operator) Capture(s []string) error {
 	*o = operatorMap[s[0]]
 	return nil
 }
-
-//
-// Parser definitions.
 
 // DiceRoll - String representing a dice roll atomic expression.
 type DiceRoll string
@@ -96,9 +90,6 @@ type Atom struct {
 	RollExpr      *DiceRoll   `parser:"| @DiceRoll"`
 	SubExpression *Expression `parser:"| '(' @@ ')'"`
 }
-
-//
-// String functions; print the expression components as normalized text.
 
 // String - Output the dice Expression as a string; top level of recursive output functions.
 func (e *Expression) String() string {
@@ -159,9 +150,6 @@ func (s *DiceRoll) String() string {
 	ret := string(*s)
 	return ret
 }
-
-//
-// Roll functions; calculate a "roll" of the expression.
 
 // Roll - Roll a random value for the Expression; top-level of the recursive roll functions.
 func (e *Expression) Roll() int64 {
@@ -245,9 +233,7 @@ func (s *DiceRoll) Roll() int64 {
 	return rollIt("d", left, right)
 }
 
-//
-// Calculate functions; calculate combinations, probabilities, bounds, etc.
-// TODO - Need to write.
+// TODO - Need to write the Calculate functions.
 
 // rollIt - Using the selected method, roll n dice of s faces, and return the sum.
 func rollIt(method string, n int64, s int64) int64 {
@@ -288,13 +274,16 @@ func rollIt(method string, n int64, s int64) int64 {
 
 // New - Create a new DiceProb instance.
 func New(s string) (*DiceProb, error) {
+	// Create our object.
 	obj := &DiceProb{Expression: s, Parser: diceParser, Parsed: &Expression{}}
 
+	// Parse the expression and put it into the object.
 	err := obj.Parser.ParseString("", obj.Expression, obj.Parsed)
 	if err != nil {
 		return nil, err
 	}
 
+	// Return the object.
 	return obj, nil
 }
 

@@ -24,7 +24,7 @@ continue with my hobby, and maybe enable others in the process.
 Install with:
 
 ``` shell
-$ go get github.com/jason-dour/diceprob
+go get github.com/jason-dour/diceprob
 ```
 
 ## Usage
