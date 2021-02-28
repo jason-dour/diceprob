@@ -1,6 +1,6 @@
 # diceprob
 
-Go Library for calculating combinations and probabilities for complex dice expressions.
+Go package for calculating combinations and probabilities for complex dice expressions.
 
 ## Purpose
 
@@ -54,7 +54,7 @@ repr.Println(dize.ParsedExpression())
 }
 ```
 
-From there you can calculate the combinations, probabilities, et al.
+From there you can calculate the outcomes, distribution, probabilities, et al.
 
 ``` golang
 dize.Calculate()
@@ -77,10 +77,10 @@ for _, i := range *dize.OutcomeList() {
 Or you can just "roll" the dice expression and retrieve a value.
 
 ``` golang
-dize.ParsedExpression().Roll()
+dize.Roll()
 ```
 
 ## Notes
 
-* golang memoize
-  * import "golang.org/x/tools/internal/memoize"
+* Memoize for speed?
+  * "golang.org/x/tools/internal/memoize"
