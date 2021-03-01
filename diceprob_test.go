@@ -60,7 +60,7 @@ func TestRoll(t *testing.T) {
 	}
 }
 
-func TestDistribution(t *testing.T) {
+func TestDistributionNdS(t *testing.T) {
 	d, err := New("3d6")
 	if err != nil {
 		t.Errorf("Could not create new instance.")
@@ -84,6 +84,93 @@ func TestDistribution(t *testing.T) {
 		16: 6,
 		17: 3,
 		18: 1,
+	}
+	t.Logf("expected=%v", expected)
+	actual := *d.Distribution
+	t.Logf("actual=%v", actual)
+	eq := reflect.DeepEqual(expected, actual)
+	t.Logf("DeepEqual?=%v", eq)
+	if !eq {
+		t.Errorf("Calculated distribution does not match the control distribution.")
+	}
+}
+
+func TestDistributionNdF(t *testing.T) {
+	d, err := New("3dF")
+	if err != nil {
+		t.Errorf("Could not create new instance.")
+	}
+	t.Logf("d=%v", d)
+	d.Calculate()
+	expected := map[int64]int64{
+		-3: 1,
+		-2: 3,
+		-1: 6,
+		0:  7,
+		1:  6,
+		2:  3,
+		3:  1,
+	}
+	t.Logf("expected=%v", expected)
+	actual := *d.Distribution
+	t.Logf("actual=%v", actual)
+	eq := reflect.DeepEqual(expected, actual)
+	t.Logf("DeepEqual?=%v", eq)
+	if !eq {
+		t.Errorf("Calculated distribution does not match the control distribution.")
+	}
+}
+
+func TestDistributionMidS(t *testing.T) {
+	d, err := New("mid20")
+	if err != nil {
+		t.Errorf("Could not create new instance.")
+	}
+	t.Logf("d=%v", d)
+	d.Calculate()
+	expected := map[int64]int64{
+		1:  58,
+		2:  166,
+		3:  262,
+		4:  346,
+		5:  418,
+		6:  478,
+		7:  526,
+		8:  562,
+		9:  586,
+		10: 598,
+		11: 598,
+		12: 586,
+		13: 562,
+		14: 526,
+		15: 478,
+		16: 418,
+		17: 346,
+		18: 262,
+		19: 166,
+		20: 58,
+	}
+	t.Logf("expected=%v", expected)
+	actual := *d.Distribution
+	t.Logf("actual=%v", actual)
+	eq := reflect.DeepEqual(expected, actual)
+	t.Logf("DeepEqual?=%v", eq)
+	if !eq {
+		t.Errorf("Calculated distribution does not match the control distribution.")
+	}
+}
+
+func TestDistributionMidF(t *testing.T) {
+	d, err := New("midF")
+	if err != nil {
+		t.Errorf("Could not create new instance.")
+	}
+	t.Logf("d=%v", d)
+	d.Calculate()
+	expected := map[int64]int64{
+		-1: 7,
+		0:  13,
+		1:  7,
 	}
 	t.Logf("expected=%v", expected)
 	actual := *d.Distribution

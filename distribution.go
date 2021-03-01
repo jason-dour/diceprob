@@ -78,88 +78,98 @@ func (s *DiceRoll) Distribution() *map[int64]int64 {
 	left := m[re.SubexpIndex("left")]
 	right := m[re.SubexpIndex("right")]
 
-	switch right {
-	case "f":
-		// TODO - All Fudge/FATE dice code needs an overhaul. Ugh.
-		switch left {
-		case "mi":
-			// If the dice roll is a "middle" roll of 3 dice.
-			// TODO - midF?  Haven't done that before; need to craft that logic.
-			// if sActual[0:3] == "mid" {
-			// 	// For each outcome in 1..s, calculate the number of combinations giving outcome as the middle value.
-			// 	for outcome := int64(1); outcome <= right; outcome++ {
-			// 		retDist[outcome] = 1 + (3 * (right - 1)) + (6 * (outcome - 1) * (right - outcome))
-			// 	}
-			// 	return &retDist
-			// }
-			break
-		default:
-			// Standard Fudge/Fate dice roll.
-			break
-		}
-		break
-	default:
-		rightInt, err := strconv.ParseInt(right, 10, 64)
+	// Convert the right side to an integer.
+	rightInt := int64(0)
+	if right == "f" {
+		// Fudge/FATE dice equate to d3.
+		rightInt = 3
+	} else {
+		// Otherwise convert the string to integer.
+		err := error(nil)
+		rightInt, err = strconv.ParseInt(right, 10, 64)
 		if err != nil {
 			panic(err)
 		}
-		switch left {
-		case "mi":
-			// If the dice roll is a "middle" roll of 3 dice.
-			if sActual[0:3] == "mid" {
-				// For each outcome in 1..s, calculate the number of combinations giving outcome as the middle value.
-				for outcome := int64(1); outcome <= rightInt; outcome++ {
-					retDist[outcome] = 1 + (3 * (rightInt - 1)) + (6 * (outcome - 1) * (rightInt - outcome))
-				}
-			}
-			break
-		default:
-			// Standard dice roll. Convert left to Int64.
-			leftInt, err := strconv.ParseInt(left, 10, 64)
-			if err != nil {
-				panic(err)
-			}
+	}
 
-			// Save effort if only one die...
-			if leftInt == 1 {
-				// Each outcome only occurs once.
-				for outcome := int64(1); outcome <= rightInt; outcome++ {
+	// Determine which kind of roll it is...
+	switch left {
+	case "mi":
+		// "Middle" roll.
+
+		// For each outcome in the set...
+		for outcome := int64(1); outcome <= rightInt; outcome++ {
+			// Calculate the number of combinations giving outcome as the middle value.
+			retDist[outcome] = 1 + (3 * (rightInt - 1)) + (6 * (outcome - 1) * (rightInt - outcome))
+		}
+
+		if right == "f" {
+			for i := int64(1); i <= 3; i++ {
+				retDist[i-2] = retDist[i]
+			}
+			delete(retDist, 2)
+			delete(retDist, 3)
+		}
+
+		break
+	default:
+		// Standard dice roll. Convert left to Int64.
+		leftInt, err := strconv.ParseInt(left, 10, 64)
+		if err != nil {
+			panic(err)
+		}
+
+		// Save effort if only one die...
+		if leftInt == 1 {
+			for outcome := int64(1); outcome <= rightInt; outcome++ {
+				if right == "f" {
+					retDist[outcome-2] = 1
+				} else {
 					retDist[outcome] = 1
 				}
-				break
 			}
-
-			// More than 1 die!
-			// Calculate min, max
-			min := leftInt
-			max := leftInt * rightInt
-			// And peak around which we will mirror the distribution.
-			peak := (min + max) / 2
-
-			// For every outcome from min to peak...
-			for outcome := min; outcome <= peak; outcome++ {
-				// Caculated the mirrored outcome.
-				reflected := min + max - outcome
-				// Determine the ceiling of the sum function.
-				ceiling := (outcome - leftInt) / rightInt
-				// Initialize the frequency.
-				frequency := int64(0)
-				// For 0 to ceiling, sum the frequencies.
-				for i := int64(0); i <= ceiling; i++ {
-					part1 := big.NewInt(0)
-					part2 := big.NewInt(0)
-					frequency = frequency + (int64(math.Pow(-1, float64(i))) *
-						part1.Binomial(leftInt, i).Int64() *
-						part2.Binomial((outcome-(rightInt*i)-1), (leftInt-1)).Int64())
-				}
-				// Assign the outcome...
-				retDist[outcome] = frequency
-				// ...and its mirror.
-				retDist[reflected] = frequency
-			}
-
 			break
 		}
+
+		// More than 1 die!
+		// Calculate min, max
+		min := leftInt
+		max := leftInt * rightInt
+		// And peak around which we will mirror the distribution.
+		peak := (min + max) / 2
+
+		// For every outcome from min to peak...
+		for outcome := min; outcome <= peak; outcome++ {
+			// Caculated the mirrored outcome.
+			reflected := min + max - outcome
+			// Determine the ceiling of the sum function.
+			ceiling := (outcome - leftInt) / rightInt
+			// Initialize the frequency.
+			frequency := int64(0)
+			// For 0 to ceiling, sum the frequencies.
+			for i := int64(0); i <= ceiling; i++ {
+				part1 := big.NewInt(0)
+				part2 := big.NewInt(0)
+				frequency = frequency + (int64(math.Pow(-1, float64(i))) *
+					part1.Binomial(leftInt, i).Int64() *
+					part2.Binomial((outcome-(rightInt*i)-1), (leftInt-1)).Int64())
+			}
+			// Assign the outcome...
+			retDist[outcome] = frequency
+			// ...and its mirror.
+			retDist[reflected] = frequency
+		}
+
+		// If Fudge/FATE dice, adjust the outcomes.
+		if right == "f" {
+			for i, j := int64(leftInt*-1), min; i <= leftInt; i, j = i+1, j+1 {
+				retDist[i] = retDist[j]
+			}
+			for i := leftInt + 1; i <= max; i++ {
+				delete(retDist, i)
+			}
+		}
+
 		break
 	}
 	// Return the distribution.
