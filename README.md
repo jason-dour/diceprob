@@ -27,12 +27,50 @@ Install with:
 go get github.com/jason-dour/diceprob
 ```
 
+## Dice Expression Syntax
+
+* `N`
+  * The number of dice in a single dice roll.
+  * Can be any integer number.
+* `S`
+  * The number of sides on the dice in a single dice roll.
+  * Can be any integer number, as well as `F` or `f` for Fudge/FATE dice.
+* `NdS`
+  * Roll `N` dice, each with same number of sides `S`.
+  * Examples:
+    * 1d6
+    * 3d6
+    * 1d4
+    * 1d20
+    * 3df
+* `midS`
+  * Roll 3 dice, each with same number of sides `S`, and return the middle value of the three values.
+  * Examples:
+    * mid20
+    * mid10
+    * midf
+* `[+ | - | * | /]`
+  * Math operators; will add/subtract/multiply/divide the left and right terms.
+  * Example:
+    * 2d6+1d4
+* `[0-9+]`
+  * Modifier; a fixed number.
+  * Example:
+    * 2d6+1
+    * 3d6-4
+* `( expression )`
+  * Grouping; you may use parentheses to enclose sub-expressions, to ensure proper calculation.
+  * Example:
+    * (1d6+2)*3
+
 ## Usage
 
-Create a new instance:
+Everything is driven through the `DiceProb` type, and its methods.
+
+Create a new instance by providing your dice expression:
 
 ``` golang
-dize, err := diceprob.New("3d6")
+d, err := diceprob.New("3d6")
 if err != nil {
   panic(err)
 }
@@ -41,7 +79,7 @@ if err != nil {
 Creating the instance will automatically parse the expression into an object tree.
 
 ``` golang
-repr.Println(dize.ParsedExpression())
+repr.Println(d.ParsedExpression())
 ```
 
 ``` text
@@ -57,27 +95,27 @@ repr.Println(dize.ParsedExpression())
 From there you can calculate the outcomes, distribution, probabilities, et al.
 
 ``` golang
-dize.Calculate()
+d.Calculate()
 ```
 
 And call them for display or computation.
 
 ``` golang
-fmt.Printf("Expression: %s\n", dize.InputExpression())
-fmt.Printf("Bounds: %v..%v\n", dize.Min(), dize.Max())
-fmt.Printf("Outcomes: %v\n", dize.TotalOutcomes())
-fmt.Printf("Outcome Set: %s\n", strings.Join(*dize.OutcomeListString(), ","))
+fmt.Printf("Expression: %s\n", d.InputExpression())
+fmt.Printf("Bounds: %v..%v\n", d.Min(), d.Max())
+fmt.Printf("Permutations: %v\n", d.Permutations())
+fmt.Printf("Outcome Set: %s\n", strings.Join(*d.OutcomesString(), ","))
 fmt.Printf("Distribution:\n  Outcome | Frequency | Probability\n")
 
-for _, i := range *dize.OutcomeList() {
-  fmt.Printf("  %-8d  %-8d    %.6g\n", i, (*dize.Distribution)[i], (*dize.Probabilities)[i])
+for _, i := range *d.Outcomes() {
+  fmt.Printf("  %-8d  %-8d    %.6g\n", i, (*d.Distribution())[i], (*d.Probabilities())[i])
 }
 ```
 
 Or you can just "roll" the dice expression and retrieve a value.
 
 ``` golang
-dize.Roll()
+d.Roll()
 ```
 
 ## Notes

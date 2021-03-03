@@ -40,8 +40,8 @@ func (d *DiceProb) Outcomes() *[]int64 {
 	return d.outcomes
 }
 
-// OutcomeListString - Return list of outcomes for the expression as strings.
-func (d *DiceProb) OutcomeListString() *[]string {
+// OutcomesString - Return list of outcomes for the expression as strings.
+func (d *DiceProb) OutcomesString() *[]string {
 	ret := []string{}
 	for i := 0; i < len(*d.outcomes); i++ {
 		ret = append(ret, strconv.FormatInt((*d.outcomes)[i], 10))

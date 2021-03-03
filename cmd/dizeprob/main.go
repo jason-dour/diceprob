@@ -19,8 +19,8 @@ func main() {
 
 	fmt.Printf("Expression: %s\n", dize.Expression())
 	fmt.Printf("Bounds: %v..%v\n", dize.Min(), dize.Max())
-	fmt.Printf("Outcomes: %v\n", dize.Outcomes())
-	fmt.Printf("Outcome Set: %s\n", strings.Join(*dize.OutcomeListString(), ","))
+	fmt.Printf("Permutations: %v\n", dize.Outcomes())
+	fmt.Printf("Outcome Set: %s\n", strings.Join(*dize.OutcomesString(), ","))
 	fmt.Printf("Distribution:\n  Outcome | Frequency | Probability\n")
 
 	for _, i := range *dize.Outcomes() {
