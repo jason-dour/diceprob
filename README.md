@@ -10,14 +10,14 @@ For decades I've been fascinated with game design and specifically dice as the r
 element of those designs.  
 
 I spent years researching combinatorics and probabilities of dice as a personal hobby.
-Maybe that's weird.  Regardless, that eventually led to me writing code, and that initially
-took form as a [Perl module `Games::Dice::Probability`](https://metacpan.org/pod/Games::Dice::Probability).
+Maybe that's weird.  This package is based on prior work I've done on a
+[Perl module `Games::Dice::Probability`](https://metacpan.org/pod/Games::Dice::Probability).
+I'm updating it to be Golang and useful to me now.
 
-The `G::D::P` module was blazing fast, worked well for what I used it for, and seemed
-to have enough users to have made the coding worthwhile.
+## The Math
 
-Fast forward many many years, and I'm rewriting it as a Golang package to allow me to
-continue with my hobby, and maybe enable others in the process.
+There's a lot of math behind the scenes. I discuss it
+[on my website](https://oddgeek.info/projects/dice-probability/).
 
 ## Install
 
