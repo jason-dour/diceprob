@@ -10,15 +10,15 @@ import (
 
 // Distribution - Determine the outcomes' distribution for the Expression; top-level of the recursive distribution functions.
 func (e *Expression) Distribution() *map[int64]int64 {
-	left := e.Left.Distribution()
+	left := e.Left.distribution()
 	for _, right := range e.Right {
-		left = right.Operator.Distribution(left, right.Term.Distribution())
+		left = right.Operator.distribution(left, right.Term.distribution())
 	}
 	return left
 }
 
 // Distribution - Determine the outcomes' distribution around an Operator; part of the recursive distribution functions.
-func (o Operator) Distribution(left, right *map[int64]int64) *map[int64]int64 {
+func (o Operator) distribution(left, right *map[int64]int64) *map[int64]int64 {
 	combined := map[int64]int64{}
 
 	for outcome1, freq1 := range *left {
@@ -42,28 +42,28 @@ func (o Operator) Distribution(left, right *map[int64]int64) *map[int64]int64 {
 }
 
 // Distribution - Determine the outcomes' distribution for the Term; part of the recursive distribution functions.
-func (t *Term) Distribution() *map[int64]int64 {
-	left := t.Left.Distribution()
+func (t *Term) distribution() *map[int64]int64 {
+	left := t.Left.distribution()
 	for _, right := range t.Right {
-		left = right.Operator.Distribution(left, right.Atom.Distribution())
+		left = right.Operator.distribution(left, right.Atom.distribution())
 	}
 	return left
 }
 
 // Distribution - Determine the outcomes' distribution for the Atom; part of the recursive distribution functions.
-func (a *Atom) Distribution() *map[int64]int64 {
+func (a *Atom) distribution() *map[int64]int64 {
 	switch {
 	case a.Modifier != nil:
 		return &map[int64]int64{*a.Modifier: 1}
 	case a.RollExpr != nil:
-		return a.RollExpr.Distribution()
+		return a.RollExpr.distribution()
 	default:
 		return a.SubExpression.Distribution()
 	}
 }
 
 // Distribution - Determine the outcomes' distribution for the DiceRoll; deepest of the recursive distribution functions.
-func (s *DiceRoll) Distribution() *map[int64]int64 {
+func (s *DiceRoll) distribution() *map[int64]int64 {
 	// Convert s to a string.
 	sActual := strings.ToLower(string(*s))
 
@@ -140,7 +140,7 @@ func (s *DiceRoll) Distribution() *map[int64]int64 {
 
 		// For every outcome from min to peak...
 		for outcome := min; outcome <= peak; outcome++ {
-			// Caculated the mirrored outcome.
+			// Calculated the mirrored outcome.
 			reflected := min + max - outcome
 			// Determine the ceiling of the sum function.
 			ceiling := (outcome - leftInt) / rightInt

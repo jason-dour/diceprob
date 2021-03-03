@@ -7,15 +7,15 @@ import (
 
 // String - Output the dice Expression as a string; top level of recursive output functions.
 func (e *Expression) String() string {
-	out := []string{e.Left.String()}
+	out := []string{e.Left.string()}
 	for _, r := range e.Right {
-		out = append(out, r.String())
+		out = append(out, r.string())
 	}
 	return strings.Join(out, " ")
 }
 
 // String - Output the Operator as a string; part of the recursive output functions.
-func (o Operator) String() string {
+func (o Operator) string() string {
 	switch o {
 	case OpMul:
 		return "*"
@@ -30,37 +30,37 @@ func (o Operator) String() string {
 }
 
 // String - Output the Operator and Term as a string; part of the recursive output functions.
-func (o *OpTerm) String() string {
-	return fmt.Sprintf("%s %s", o.Operator, o.Term)
+func (o *OpTerm) string() string {
+	return fmt.Sprintf("%s %s", o.Operator.string(), o.Term.string())
 }
 
 // String - Output the Term as a string; part of the recursive output functions.
-func (t *Term) String() string {
-	out := []string{t.Left.String()}
+func (t *Term) string() string {
+	out := []string{t.Left.string()}
 	for _, r := range t.Right {
-		out = append(out, r.String())
+		out = append(out, r.string())
 	}
 	return strings.Join(out, " ")
 }
 
 // String - Output the Operator and Atom as a string; part of the recursive output functions.
-func (o *OpAtom) String() string {
-	return fmt.Sprintf("%s %s", o.Operator, o.Atom)
+func (o *OpAtom) string() string {
+	return fmt.Sprintf("%s %s", o.Operator.string(), o.Atom.string())
 }
 
 // String - Output the Atom as a string; part of the recursive output functions.
-func (a *Atom) String() string {
+func (a *Atom) string() string {
 	if a.Modifier != nil {
 		return fmt.Sprintf("%d", *a.Modifier)
 	}
 	if a.RollExpr != nil {
-		return a.RollExpr.String()
+		return a.RollExpr.string()
 	}
 	return "(" + a.SubExpression.String() + ")"
 }
 
 // String - Output the DiceRoll as a string; the deepest of the recursive output functions.
-func (s *DiceRoll) String() string {
+func (s *DiceRoll) string() string {
 	ret := string(*s)
 	return ret
 }

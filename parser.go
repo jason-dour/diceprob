@@ -31,7 +31,7 @@ const (
 	OpSub
 )
 
-// operartorMap - Map parsed operators to constants.
+// operatorMap - Map parsed operators to constants.
 var operatorMap = map[string]Operator{"+": OpAdd, "-": OpSub, "*": OpMul, "/": OpDiv}
 
 // Capture - Capture the costants while parsing.

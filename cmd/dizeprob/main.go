@@ -17,13 +17,13 @@ func main() {
 
 	dize.Calculate()
 
-	fmt.Printf("Expression: %s\n", dize.InputExpression())
+	fmt.Printf("Expression: %s\n", dize.Expression())
 	fmt.Printf("Bounds: %v..%v\n", dize.Min(), dize.Max())
-	fmt.Printf("Outcomes: %v\n", dize.TotalOutcomes())
+	fmt.Printf("Outcomes: %v\n", dize.Outcomes())
 	fmt.Printf("Outcome Set: %s\n", strings.Join(*dize.OutcomeListString(), ","))
 	fmt.Printf("Distribution:\n  Outcome | Frequency | Probability\n")
 
-	for _, i := range *dize.OutcomeList() {
-		fmt.Printf("  %-8d  %-8d    %.6g\n", i, (*dize.Distribution)[i], (*dize.Probabilities)[i])
+	for _, i := range *dize.Outcomes() {
+		fmt.Printf("  %-8d  %-8d    %.6g\n", i, (*dize.Distribution())[i], (*dize.Probabilities())[i])
 	}
 }

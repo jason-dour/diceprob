@@ -16,7 +16,7 @@ func TestNew(t *testing.T) {
 		t.Errorf("Could not create new instance.")
 	}
 	t.Logf("d=%v", d)
-	actual := d.InputExpression()
+	actual := d.Expression()
 	t.Logf("actual=%v", actual)
 	if actual != expected {
 		t.Errorf("Actual value does not match expected value.")
@@ -86,7 +86,7 @@ func TestDistributionNdS(t *testing.T) {
 		18: 1,
 	}
 	t.Logf("expected=%v", expected)
-	actual := *d.Distribution
+	actual := *d.Distribution()
 	t.Logf("actual=%v", actual)
 	eq := reflect.DeepEqual(expected, actual)
 	t.Logf("DeepEqual?=%v", eq)
@@ -112,7 +112,7 @@ func TestDistributionNdF(t *testing.T) {
 		3:  1,
 	}
 	t.Logf("expected=%v", expected)
-	actual := *d.Distribution
+	actual := *d.Distribution()
 	t.Logf("actual=%v", actual)
 	eq := reflect.DeepEqual(expected, actual)
 	t.Logf("DeepEqual?=%v", eq)
@@ -151,7 +151,7 @@ func TestDistributionMidS(t *testing.T) {
 		20: 58,
 	}
 	t.Logf("expected=%v", expected)
-	actual := *d.Distribution
+	actual := *d.Distribution()
 	t.Logf("actual=%v", actual)
 	eq := reflect.DeepEqual(expected, actual)
 	t.Logf("DeepEqual?=%v", eq)
@@ -173,7 +173,7 @@ func TestDistributionMidF(t *testing.T) {
 		1:  7,
 	}
 	t.Logf("expected=%v", expected)
-	actual := *d.Distribution
+	actual := *d.Distribution()
 	t.Logf("actual=%v", actual)
 	eq := reflect.DeepEqual(expected, actual)
 	t.Logf("DeepEqual?=%v", eq)
@@ -189,8 +189,8 @@ func TestCombinedDistributions(t *testing.T) {
 	}
 	t.Logf("d1=%v", d1)
 	d1.Calculate()
-	t.Logf("d1.Distribution()=%v", d1.Distribution)
-	t.Logf("d1.Probabilities()=%v", d1.Probabilities)
+	t.Logf("d1.Distribution()=%v", d1.Distribution())
+	t.Logf("d1.Probabilities()=%v", d1.Probabilities())
 
 	d2, err := New("4d6")
 	if err != nil {
@@ -198,19 +198,19 @@ func TestCombinedDistributions(t *testing.T) {
 	}
 	t.Logf("d2=%v", d2)
 	d2.Calculate()
-	t.Logf("d2.Distribution()=%v", d2.Distribution)
-	t.Logf("d2.Probabilities()=%v", d2.Probabilities)
+	t.Logf("d2.Distribution()=%v", d2.Distribution())
+	t.Logf("d2.Probabilities()=%v", d2.Probabilities())
 
-	eq := reflect.DeepEqual(d1.Distribution, d2.Distribution)
+	eq := reflect.DeepEqual(d1.Distribution(), d2.Distribution())
 	t.Logf("Distribution.DeepEqual?=%v", eq)
 	if !eq {
-		t.Errorf("Distribution of (%s) does not match distribution of (%s).", d1.Parsed.String(), d2.Parsed.String())
+		t.Errorf("Distribution of (%s) does not match distribution of (%s).", d1.ParsedExpression().String(), d2.ParsedExpression().String())
 	}
 
-	eq = reflect.DeepEqual(d1.Probabilities, d2.Probabilities)
+	eq = reflect.DeepEqual(d1.Probabilities(), d2.Probabilities())
 	t.Logf("Probabilities.DeepEqual?=%v", eq)
 	if !eq {
-		t.Errorf("Probabilities of (%s) do not match Probabilities of (%s).", d1.Parsed.String(), d2.Parsed.String())
+		t.Errorf("Probabilities of (%s) do not match Probabilities of (%s).", d1.ParsedExpression().String(), d2.ParsedExpression().String())
 	}
 }
 
@@ -221,7 +221,7 @@ func TestSameProbabilities(t *testing.T) {
 	}
 	t.Logf("d1=%v", d1)
 	d1.Calculate()
-	t.Logf("d1.Distribution()=%v", d1.Distribution)
+	t.Logf("d1.Distribution()=%v", d1.Distribution())
 
 	d2, err := New("4d6")
 	if err != nil {
@@ -229,22 +229,22 @@ func TestSameProbabilities(t *testing.T) {
 	}
 	t.Logf("d2=%v", d2)
 	d2.Calculate()
-	t.Logf("d2.Distribution()=%v", d2.Distribution)
+	t.Logf("d2.Distribution()=%v", d2.Distribution())
 
 	eq := reflect.DeepEqual(d1.Distribution, d2.Distribution)
 	t.Logf("Distribution.DeepEqual?=%v", eq)
 	if eq {
-		t.Errorf("Distribution of (%s) matches distribution of (%s).", d1.Parsed.String(), d2.Parsed.String())
+		t.Errorf("Distribution of (%s) matches distribution of (%s).", d1.ParsedExpression().String(), d2.ParsedExpression().String())
 	}
 
-	k1 := reflect.ValueOf(*d1.Probabilities).MapKeys()
+	k1 := reflect.ValueOf(*d1.Probabilities()).MapKeys()
 	k11 := make([]int64, len(k1))
 	for i := 0; i < len(k1); i++ {
 		k11[i] = k1[i].Int()
 	}
 	sort.Slice(k11, func(i, j int) bool { return k11[i] < k11[j] })
 
-	k2 := reflect.ValueOf(*d2.Probabilities).MapKeys()
+	k2 := reflect.ValueOf(*d2.Probabilities()).MapKeys()
 	k22 := make([]int64, len(k1))
 	for i := 0; i < len(k2); i++ {
 		k22[i] = k2[i].Int()
@@ -254,14 +254,14 @@ func TestSameProbabilities(t *testing.T) {
 	p1 := make([]float64, len(k1))
 	p2 := make([]float64, len(k2))
 	for i := 0; i < len(k1); i++ {
-		p1[i] = (*d1.Probabilities)[k11[i]]
-		p2[i] = (*d2.Probabilities)[k22[i]]
+		p1[i] = (*d1.Probabilities())[k11[i]]
+		p2[i] = (*d2.Probabilities())[k22[i]]
 	}
 	t.Logf("d1.Probabilities()->Values=%v", p1)
 	t.Logf("d2.Probabilities()->Values=%v", p2)
 	eq = reflect.DeepEqual(p1, p2)
 	t.Logf("Probabilities.DeepEqual?=%v", eq)
 	if !eq {
-		t.Errorf("Probabilities of (%s) do not match Probabilities of (%s).", d1.Parsed.String(), d2.Parsed.String())
+		t.Errorf("Probabilities of (%s) do not match Probabilities of (%s).", d1.ParsedExpression().String(), d2.ParsedExpression().String())
 	}
 }

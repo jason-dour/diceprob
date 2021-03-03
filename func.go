@@ -10,17 +10,17 @@ import (
 func New(s string) (*DiceProb, error) {
 	// Create our object.
 	obj := &DiceProb{
-		Expression:    s,
-		Parsed:        &Expression{},
-		Distribution:  &map[int64]int64{},
-		Probabilities: &map[int64]float64{},
-		Bounds:        &[]int64{},
-		Outcome:       &[]int64{},
-		Outcomes:      int64(0),
+		expression:    s,
+		parsed:        &Expression{},
+		distribution:  &map[int64]int64{},
+		probabilities: &map[int64]float64{},
+		bounds:        &[]int64{},
+		outcomes:      &[]int64{},
+		permutations:  int64(0),
 	}
 
 	// Parse the expression and put it into the object.
-	err := diceParser.ParseString("", obj.Expression, obj.Parsed)
+	err := diceParser.ParseString("", obj.expression, obj.parsed)
 	if err != nil {
 		return nil, err
 	}
