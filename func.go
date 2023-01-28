@@ -20,7 +20,8 @@ func New(s string) (*DiceProb, error) {
 	}
 
 	// Parse the expression and put it into the object.
-	err := diceParser.ParseString("", obj.expression, obj.parsed)
+	var err error
+	obj.parsed, err = diceParser.ParseString("", obj.expression)
 	if err != nil {
 		return nil, err
 	}

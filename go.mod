@@ -1,8 +1,8 @@
 module github.com/jason-dour/diceprob
 
-go 1.13
+go 1.19
 
 require (
-	github.com/alecthomas/participle/v2 v2.0.0-alpha3
-	github.com/alecthomas/repr v0.0.0-20201120212035-bb82daffcca2
+	github.com/alecthomas/participle/v2 v2.0.0-beta.5
+	github.com/alecthomas/repr v0.1.0
 )
