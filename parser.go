@@ -1,24 +1,24 @@
 package diceprob
 
 import (
-	participle "github.com/alecthomas/participle/v2"
-	"github.com/alecthomas/participle/v2/lexer/stateful"
+	"github.com/alecthomas/participle/v2"
+	"github.com/alecthomas/participle/v2/lexer"
 )
 
 // Dice expression lexer.
-var diceLexer = stateful.MustSimple([]stateful.Rule{
-	{Name: "DiceRoll", Pattern: `(\d+|[mM][iI])[dD](\d+|[fF])`, Action: nil},
-	{Name: "Modifier", Pattern: `\d+`, Action: nil},
-	{Name: "+", Pattern: `\+`, Action: nil},
-	{Name: "-", Pattern: `-`, Action: nil},
-	{Name: "*", Pattern: `\*`, Action: nil},
-	{Name: "/", Pattern: `/`, Action: nil},
-	{Name: "(", Pattern: `\(`, Action: nil},
-	{Name: ")", Pattern: `\)`, Action: nil},
+var diceLexer = lexer.MustSimple([]lexer.SimpleRule{
+	{Name: "DiceRoll", Pattern: `(\d+|[mM][iI])[dD](\d+|[fF])`},
+	{Name: "Modifier", Pattern: `\d+`},
+	{Name: "+", Pattern: `\+`},
+	{Name: "-", Pattern: `-`},
+	{Name: "*", Pattern: `\*`},
+	{Name: "/", Pattern: `/`},
+	{Name: "(", Pattern: `\(`},
+	{Name: ")", Pattern: `\)`},
 })
 
 // Parser for our dice expressions.
-var diceParser = participle.MustBuild(&Expression{}, participle.Lexer(diceLexer), participle.UseLookahead(2))
+var diceParser = participle.MustBuild[Expression](participle.Lexer(diceLexer), participle.UseLookahead(2))
 
 // Operator type
 type Operator int
